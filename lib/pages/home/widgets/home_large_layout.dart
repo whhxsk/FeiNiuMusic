@@ -203,7 +203,7 @@ class HomeLargeLayout extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         HomeSectionHeader(
-                          title: '最新歌曲',
+                          title: '最近添加',
                           onViewAll: onOpenSongs,
                         ),
                         if (recentTracks.isNotEmpty &&
@@ -213,7 +213,7 @@ class HomeLargeLayout extends StatelessWidget {
                         Expanded(
                           child: recentTracks.isEmpty
                               ? (sectionFeedback[HomeSection.tracks] ??
-                                    const _LargeEmpty(text: '暂无最新歌曲'))
+                                    const _LargeEmpty(text: '暂无最近添加'))
                               : _LargeScrollableSongList(
                                   songs: recentTracks,
                                   onTap: onTapTrack,

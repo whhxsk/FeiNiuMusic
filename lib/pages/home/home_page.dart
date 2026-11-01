@@ -674,6 +674,12 @@ class _HomePageState extends State<HomePage>
     ).push(buildAppPageRoute<void>((_) => const SongsPage()));
   }
 
+  void _openRecentlyAddedPage() {
+    Navigator.of(context).push(
+      buildAppPageRoute<void>((_) => const SongsPage(recentlyAdded: true)),
+    );
+  }
+
   void _openArtistsPage() {
     Navigator.of(context).pushNamed(AppRoutes.artists);
   }
@@ -888,7 +894,7 @@ class _HomePageState extends State<HomePage>
               onTapAlbum: _openAlbumDetail,
               recentTracks: _recentTracks.value,
               favoriteSongs: _favoriteSongs.value,
-              onOpenSongs: _openSongsPage,
+              onOpenSongs: _openRecentlyAddedPage,
               onOpenFavorite: _openFavoritePage,
               onTapTrack: (song) => _playHomeSong(
                 song,
@@ -1034,7 +1040,7 @@ class _HomePageState extends State<HomePage>
                 feedback,
               // 4. 最新歌曲 — 紧凑竖排行列表
               if (_recentTracks.value.isNotEmpty) ...[
-                HomeSectionHeader(title: '最新歌曲', onViewAll: _openSongsPage),
+                HomeSectionHeader(title: '最近添加', onViewAll: _openRecentlyAddedPage),
                 _CompactSongList(
                   songs: _recentTracks.value,
                   onTap: (song) => _playHomeSong(

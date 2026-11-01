@@ -49,6 +49,13 @@
 	<array>
 		<string>audio</string>
 	</array>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>用于连接局域网中的飞牛 NAS，浏览音乐文件夹并播放音乐。</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>用于需要麦克风的功能（如录音、语音识别）</string>
 	<key>NSPhotoLibraryUsageDescription</key>

@@ -9,7 +9,7 @@ enum HomeSection {
   history('最近播放'),
   albums('最新专辑'),
   playlists('我的歌单'),
-  tracks('最新歌曲');
+  tracks('最近添加');
 
   const HomeSection(this.label);
   final String label;

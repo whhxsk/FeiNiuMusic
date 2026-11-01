@@ -26,7 +26,9 @@ import 'song_detail_sheet.dart';
 
 /// 音乐库（原歌曲页面）- 从飞牛 API 分页加载并展示所有歌曲
 class SongsPage extends StatefulWidget {
-  const SongsPage({super.key});
+  const SongsPage({super.key, this.recentlyAdded = false});
+
+  final bool recentlyAdded;
 
   @override
   State<SongsPage> createState() => _SongsPageState();
@@ -108,6 +110,7 @@ class _SongsPageState extends State<SongsPage>
   }
 
   String _apiSortParam() {
+    if (widget.recentlyAdded) return 'createdAt,desc';
     final key = _sortKey.value;
     final order = _ascending.value ? 'asc' : 'desc';
     switch (key) {
@@ -365,6 +368,7 @@ class _SongsPageState extends State<SongsPage>
   }
 
   Future<void> _restoreSortPrefs() async {
+    if (widget.recentlyAdded) return;
     final prefs = await SharedPreferences.getInstance();
     final sortKey = prefs.getString(_prefsSortKey);
     final sortAsc = prefs.getBool(_prefsSortAsc);
@@ -378,6 +382,7 @@ class _SongsPageState extends State<SongsPage>
   }
 
   Future<void> _saveSortPrefs() async {
+    if (widget.recentlyAdded) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_prefsSortKey, _sortKey.value);
     await prefs.setBool(_prefsSortAsc, _ascending.value);
@@ -411,7 +416,28 @@ class _SongsPageState extends State<SongsPage>
     if (LyricCompanionSettings.enabled.value) {
       Navigator.of(context).push(buildAppPageRoute((_) => const FoldersPage()));
     } else {
-      AppToast.show(context, '请先在设置 → 元数据管理开启「服务端增强」', type: ToastType.error);
+      showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('按 NAS 文件夹浏览'),
+          content: const Text(
+            '文件夹功能需要在 NAS 安装 FnMusicEnhance，并在元数据管理中开启「服务端增强」。开启后可按真实目录逐层浏览、搜索和播放音乐。',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('稍后'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.of(this.context).pushNamed(AppRoutes.metadataMatchSettings);
+              },
+              child: const Text('前往设置'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
@@ -477,10 +503,12 @@ class _SongsPageState extends State<SongsPage>
           key: _scaffoldKey,
           extendBodyBehindAppBar: true,
           appBar: AppTopBar(
-            title: isMultiSelecting ? '已选 $selectedCount 首' : '歌曲',
-            showBackButton: false,
+            title: isMultiSelecting
+                ? '已选 $selectedCount 首'
+                : (widget.recentlyAdded ? '最近添加' : '歌曲'),
+            showBackButton: widget.recentlyAdded,
             centerTitle: false,
-            leading: useBottomNavigation || AppLayoutSettings.tvMode.value
+            leading: widget.recentlyAdded || useBottomNavigation || AppLayoutSettings.tvMode.value
                 ? null
                 : (isMultiSelecting
                       ? IconButton(
@@ -523,7 +551,23 @@ class _SongsPageState extends State<SongsPage>
                       enabled: false,
                       onTap: toggleMultiSelect,
                     ),
-                    SortActionButton(onTap: _showSortSheet),
+                    if (!widget.recentlyAdded)
+                      SortActionButton(onTap: _showSortSheet),
+                    if (!widget.recentlyAdded)
+                      IconButton(
+                        tooltip: '最近添加',
+                        icon: const Icon(Icons.playlist_add_rounded),
+                        onPressed: () => Navigator.of(context).push(
+                          buildAppPageRoute<void>(
+                            (_) => const SongsPage(recentlyAdded: true),
+                          ),
+                        ),
+                      ),
+                    IconButton(
+                      tooltip: '文件夹',
+                      icon: const Icon(Icons.folder_outlined),
+                      onPressed: _openFolders,
+                    ),
                     IconButton(
                       tooltip: '搜索',
                       icon: const Icon(Icons.search_rounded),
