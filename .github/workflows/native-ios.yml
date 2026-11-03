@@ -1,0 +1,52 @@
+name: Build Native iOS
+on:
+  push:
+    branches: [native-ios]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-ios-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: native-ios
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+      - name: Simulator tests
+        run: |
+          DEVICE=$(xcrun simctl list devices available -j | python3 -c 'import json,sys; d=json.load(sys.stdin); print(next(x["udid"] for group in d["devices"].values() for x in group if x["name"].startswith("iPhone")))')
+          set -o pipefail
+          xcodebuild test -project FeiniuLite.xcodeproj -scheme FeiniuLite -destination "id=$DEVICE" -resultBundlePath TestResults CODE_SIGNING_ALLOWED=NO | tee tests.log
+      - name: Build iOS release
+        run: |
+          set -o pipefail
+          xcodebuild -project FeiniuLite.xcodeproj -scheme FeiniuLite -configuration Release -sdk iphoneos -destination 'generic/platform=iOS' -derivedDataPath build CODE_SIGNING_ALLOWED=NO build | tee build.log
+      - name: Package IPA
+        run: |
+          mkdir -p package/Payload
+          ditto build/Build/Products/Release-iphoneos/FeiniuLite.app package/Payload/FeiniuLite.app
+          cd package
+          zip -qry ../NiuTing-0.1.0-unsigned.ipa Payload
+          unzip -t ../NiuTing-0.1.0-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: NiuTing-native-ipa
+          path: native-ios/NiuTing-0.1.0-unsigned.ipa
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-ios-diagnostics
+          path: |
+            native-ios/tests.log
+            native-ios/build.log
+            native-ios/TestResults
